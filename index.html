@@ -120,7 +120,7 @@
                 current = getLeftPos(current);
                 cards.push(flat[current]);
             }
-            return cards;
+            return cards.reverse();  // FIXED ORDER - now Mercury first, Neptune last
         }
 
         function getBirthCard(birthStr) {
