@@ -123,19 +123,19 @@
             return cards.reverse();  // FIXED ORDER - now Mercury first, Neptune last
         }
 
+        // Birth card via solar value formula (Olney Richmond, 1893)
+        // solar_value = 55 - (month * 2 + day)
         function getBirthCard(birthStr) {
             const date = new Date(birthStr);
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            const key = `${m}-${d}`;
-            const lookup = {
-                "03-28": "8♣",
-                "02-17": "8♦",
-                "01-19": "8♦",
-                "12-30": "A♥",
-                "12-31": "Joker"
-            };
-            return lookup[key] || "8♦";
+            const m = date.getMonth() + 1;
+            const d = date.getDate();
+            const solarValue = 55 - (m * 2 + d);
+            if (solarValue <= 0) return "Joker";
+            const suits = ['♥', '♣', '♦', '♠'];
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const suit = suits[Math.floor((solarValue - 1) / 13)];
+            const rank = ranks[(solarValue - 1) % 13];
+            return `${rank}${suit}`;
         }
 
         function calculate(mode) {
@@ -156,17 +156,19 @@
                 let age = targetDate.getFullYear() - birthDate.getFullYear();
                 if ((targetDate.getMonth() < birthDate.getMonth()) || 
                     (targetDate.getMonth() === birthDate.getMonth() && targetDate.getDate() < birthDate.getDate())) age--;
-                spreadNum = Math.min(Math.max(age + 1, 1), 90);
+                spreadNum = (Math.max(age, 0) % 90) + 1;
 
                 const flat = generateSpread(spreadNum);
                 const birthPos = flat.indexOf(birthCard);
                 seven = extractSeven(flat, birthPos);
 
-                const thisYearBday = new Date(targetDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                let thisYearBday = new Date(targetDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                if (thisYearBday > targetDate) {
+                    thisYearBday = new Date(targetDate.getFullYear() - 1, birthDate.getMonth(), birthDate.getDate());
+                }
                 let daysSince = Math.floor((targetDate - thisYearBday) / 86400000) + 1;
-                if (daysSince < 1) daysSince += 365;
 
-                const period = Math.floor((daysSince - 1) / 52);
+                const period = Math.min(Math.floor((daysSince - 1) / 52), 6);
                 activeCard = seven[period];
                 planetLabel = ["Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune"][period];
                 extraInfo = `${daysSince} days since birthday`;

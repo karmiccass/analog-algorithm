@@ -37,17 +37,19 @@ def extract_seven(flat, birth_pos):
         extracted.append(flat[current])
     return extracted
 
-# FIXED birth card lookup
+# Birth card via solar value formula (Olney Richmond, 1893)
+# solar_value = 55 - (month * 2 + day)
+# Maps each day of the year to one of 52 cards + Joker (Dec 31)
 def get_birth_card(birth_date):
     m, d = birth_date.month, birth_date.day
-    key = f"{m:02d}-{d:02d}"
-    lookup = {
-        "02-17": "8♦",
-        "01-19": "8♦",
-        "12-30": "A♥",
-        "12-31": "Joker"
-    }
-    return lookup.get(key, "8♦")
+    solar_value = 55 - (m * 2 + d)
+    if solar_value <= 0:
+        return "Joker"
+    suits = ['♥', '♣', '♦', '♠']
+    ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+    suit = suits[(solar_value - 1) // 13]
+    rank = ranks[(solar_value - 1) % 13]
+    return f"{rank}{suit}"
 
 def get_suit_realm(card):
     if '♥' in card: return "Emotional"
@@ -68,7 +70,7 @@ def generate_letter(first_name, birth_str, target_month_year="2026-03"):
     target_date = datetime.strptime(f"{target_month_year}-15", "%Y-%m-%d")
 
     age = target_date.year - birth_date.year - ((target_date.month, target_date.day) < (birth_date.month, birth_date.day))
-    spread_num = min(max(age + 1, 1), 90)
+    spread_num = (max(age, 0) % 90) + 1
 
     flat = generate_spread(spread_num)
     birth_card = get_birth_card(birth_date)
