@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 70px 80px; 
+            line-height: 1.8; 
+            color: #1f2937; 
+            font-size: 11.5pt; 
+        }
+        .header { 
+            text-align: center; 
+            font-size: 13pt; 
+            color: #78350f; 
+            margin-bottom: 50px; 
+            letter-spacing: 3px; 
+        }
+        h1 { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 26pt; 
+            text-align: center; 
+            margin: 40px 0 50px; 
+            color: #111827; 
+        }
+        .footer { 
+            margin-top: 90px; 
+            text-align: center; 
+            font-size: 9pt; 
+            color: #6b7280; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">&spades; &hearts; &clubs; &diams;   THE ANALOG ALGORITHM</div>
+    <h1>Dear {{ first_name }},</h1>
+    {{ letter_body | safe }}
+    <div class="footer">
+        Confidential to {{ first_name }} • {{ month_year }} • The Analog Algorithm
+    </div>
+</body>
+</html>
