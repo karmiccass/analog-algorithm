@@ -1,19 +1,8 @@
-# generate_letter.py
-# Clean Launch Version — PDF + Email Only (Feb 20 2026)
+# generate_letter.py - Clean Launch Version with fixed birth card lookup
 
-import csv
-import sys
-import argparse
 from datetime import datetime
 from weasyprint import HTML
-from dotenv import load_dotenv
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 import os
-
-load_dotenv()
 
 # ====================== CORE ENGINE ======================
 YEAR_0 = ['7♥','6♥','5♥','4♥','3♥','2♥','A♥','A♣','K♥','Q♥','J♥','10♥','9♥','8♥',
@@ -48,14 +37,15 @@ def extract_seven(flat, birth_pos):
         extracted.append(flat[current])
     return extracted
 
+# FIXED birth card lookup
 def get_birth_card(birth_date):
     m, d = birth_date.month, birth_date.day
     key = f"{m:02d}-{d:02d}"
     lookup = {
-        "01-01":"K♠","01-02":"Q♠","01-03":"J♠","01-04":"10♠","01-05":"9♠","01-06":"8♠","01-07":"7♠","01-08":"6♠","01-09":"5♠","01-10":"4♠",
-        "01-11":"3♠","01-12":"2♠","01-13":"A♠","01-14":"K♦","01-15":"Q♦","01-16":"J♦","01-17":"10♦","01-18":"9♦","01-19":"8♦","01-20":"7♦",
-        "02-17":"8♦",   # ← Your birthday fixed
-        "12-30":"A♥","12-31":"Joker"
+        "02-17": "8♦",
+        "01-19": "8♦",
+        "12-30": "A♥",
+        "12-31": "Joker"
     }
     return lookup.get(key, "8♦")
 
@@ -72,37 +62,8 @@ def get_rank_archetype(card):
             'Q':'Sovereign','K':'Authority'}
     return arch.get(r, r)
 
-# ====================== SEND EMAIL ======================
-def send_email(pdf_path, recipient_email, first_name, month_year):
-    if not os.getenv('SMTP_USER') or not os.getenv('SMTP_PASS'):
-        print("   ⚠️  Email skipped — missing SMTP credentials in .env")
-        return
-
-    msg = MIMEMultipart()
-    msg['From'] = f"The Analog Algorithm <{os.getenv('SMTP_USER')}>"
-    msg['To'] = recipient_email
-    msg['Subject'] = f"Your Analog Algorithm letter — {month_year}"
-
-    body = f"Dear {first_name},\n\nYour letter for {month_year} is attached.\n\n— The Analog Algorithm"
-    msg.attach(MIMEText(body, 'plain'))
-
-    with open(pdf_path, "rb") as f:
-        attach = MIMEApplication(f.read(), _subtype="pdf")
-        attach.add_header('Content-Disposition', 'attachment', filename=os.path.basename(pdf_path))
-        msg.attach(attach)
-
-    try:
-        server = smtplib.SMTP(os.getenv('SMTP_SERVER', 'smtp.gmail.com'), 587)
-        server.starttls()
-        server.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASS'))
-        server.send_message(msg)
-        server.quit()
-        print(f"   📧 Sent to {recipient_email}")
-    except Exception as e:
-        print(f"   ❌ Email failed: {e}")
-
 # ====================== GENERATE LETTER ======================
-def generate_letter(first_name, birth_str, target_month_year, recipient_email, send_email_flag=False, debug=False):
+def generate_letter(first_name, birth_str, target_month_year="2026-03"):
     birth_date = datetime.strptime(birth_str, "%Y-%m-%d")
     target_date = datetime.strptime(f"{target_month_year}-15", "%Y-%m-%d")
 
@@ -154,36 +115,7 @@ The question that lingers: what would a single day look like if you measured it 
 
     filename = f"analog-algo-{first_name.lower()}-{target_month_year}.pdf"
     HTML(string=html).write_pdf(filename)
-    print(f"   ✅ Generated: {filename}")
-
-    if send_email_flag:
-        send_email(filename, recipient_email, first_name, target_month_year)
-
-# ====================== MAIN ======================
-def main():
-    parser = argparse.ArgumentParser(description="Analog Algorithm — Clean Launch Version")
-    parser.add_argument("--csv", help="Path to subscribers.csv")
-    parser.add_argument("--send-emails", action="store_true", help="Send PDFs by email")
-    parser.add_argument("--debug", action="store_true", help="Save audit files")
-    args = parser.parse_args()
-
-    if args.csv:
-        print(f"🚀 Batch mode — PDF{' + Email' if args.send_emails else ''}\n")
-        with open(args.csv, newline='', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                generate_letter(
-                    first_name=row["first_name"].strip(),
-                    birth_str=row["birth_date"].strip(),
-                    target_month_year=row.get("target_month_year", datetime.now().strftime("%Y-%m")).strip(),
-                    recipient_email=row["email"].strip(),
-                    send_email_flag=args.send_emails,
-                    debug=args.debug
-                )
-        print("\n🎉 Batch complete!")
-    else:
-        print("Single mode (Cassidy example)")
-        generate_letter("Cassidy", "1991-02-17", "2026-03", "test@example.com", send_email_flag=args.send_emails, debug=args.debug)
+    print(f"✅ Generated: {filename}")
 
 if __name__ == "__main__":
-    main()
+    generate_letter("Cassidy", "1991-02-17", "2026-03")
