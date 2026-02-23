@@ -1,38 +1,39 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
+import os
+from weasyprint import HTML
+from jinja2 import Environment, FileSystemLoader
+from datetime import datetime
 
-def build_pdf(output_path, month_year, first_name, letter_content):
-    doc = SimpleDocTemplate(output_path, pagesize=letter,
-        topMargin=1.0*inch, bottomMargin=0.75*inch,
-        leftMargin=1.0*inch, rightMargin=1.0*inch)
-        
-    # Styles
-    H = ParagraphStyle('H', fontName='Courier-Bold', fontSize=14, leading=18, alignment=TA_CENTER)
-    D = ParagraphStyle('D', fontName='Courier', fontSize=8, leading=12, alignment=TA_CENTER, spaceAfter=20)
-    B = ParagraphStyle('B', fontName='Times-Roman', fontSize=11, leading=16, alignment=TA_LEFT, spaceAfter=10)
+def build_pdf(output_path, month_year, first_name, letter_content, additional_data=None):
+    # Setup Jinja2 environment
+    template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template('lob_letter.html')
     
-    # Story
-    story = [
-        Paragraph("&#9824; &nbsp; &#9829; &nbsp; &#9827; &nbsp; &#9830;", H),
-        Paragraph(month_year.upper(), D),
-        Spacer(1, 12),
-        Paragraph(f"Dear {first_name},", B),
-        Spacer(1, 6)
-    ]
+    # Prepare data for template
+    date_obj = datetime.strptime(month_year, "%Y-%m")
+    date_str = date_obj.strftime("%B %d, %Y")
     
-    for para in letter_content.split('\n\n'):
-        if para.strip():
-            story.append(Paragraph(para.strip(), B))
-            
-    # Footer
-    def footer(canvas, doc):
-        canvas.saveState()
-        canvas.setFont('Courier', 6)
-        canvas.drawCentredString(letter[0]/2, 0.4*inch, "THE ANALOG ALGORITHM")
-        canvas.restoreState()
-        
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    # Default data if additional_data is not provided
+    data = {
+        "date_str": date_str,
+        "first_name": first_name,
+        "letter_content": letter_content.replace('\n', '<br><br>'),
+        "bc": "??",
+        "planet": "Mercury",
+        "age": "??"
+    }
+    
+    if additional_data:
+        data.update({
+            "bc": additional_data.get("birth_card", "??"),
+            "planet": additional_data.get("period", {}).get("planet", "Mercury"),
+            "age": additional_data.get("age", "??")
+        })
+    
+    # Render HTML
+    html_content = template.render(**data)
+    
+    # Generate PDF
+    HTML(string=html_content, base_url=template_dir).write_pdf(output_path)
+    
     return output_path

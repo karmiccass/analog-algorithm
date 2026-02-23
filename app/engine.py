@@ -233,6 +233,25 @@ def get_displacement_environment(life_grid, life_crown, yearly_grid, yearly_crow
         
     return disp, env
 
+# ====================== INTERPRETATION HELPERS ======================
+
+def get_suit_realm(card: str):
+    if not card: return "Unknown"
+    if '♥' in card: return "Emotional"
+    if '♣' in card: return "Behavioral"
+    if '♦' in card: return "Material"
+    return "Intellectual"
+
+def get_rank_archetype(card: str):
+    if not card: return "Unknown"
+    r = card.replace('♥','').replace('♣','').replace('♦','').replace('♠','')
+    arch = {
+        'A':'Pioneer','2':'Partner','3':'Creator','4':'Builder','5':'Disruptor',
+        '6':'Server','7':'Seeker','8':'Commander','9':'Completer','10':'Master',
+        'J':'Messenger','Q':'Sovereign','K':'Authority'
+    }
+    return arch.get(r, r)
+
 # ====================== API ENTRY POINT ======================
 
 def calculate_letter_data(first_name, birth_year, birth_month, birth_day, target_date_str="2026-03-15"):

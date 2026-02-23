@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analog Algorithm Letter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 0;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: #1a1a1a;
+            background: white;
+            line-height: 1.6;
+            width: 8.5in;
+            height: 11in;
+            position: relative;
+        }
+
+        /* LOB ADDRESS WINDOW SAFETY (Top Left) */
+        /* 0.625in from left, 0.5in from top. 3.5in wide, 1in tall. */
+        /* We leave the top 3.5 inches entirely clear for safety and professional breathing room. */
+
+        .branding {
+            position: absolute;
+            top: 0.6in;
+            right: 0.75in;
+            text-align: right;
+            border-right: 2px solid #1a1a1a;
+            padding-right: 15px;
+        }
+        .branding .title {
+            font-family: 'Crimson Pro', serif;
+            font-weight: 600;
+            font-size: 18pt;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .branding .subtitle {
+            font-size: 8pt;
+            letter-spacing: 0.2em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .content-area {
+            position: absolute;
+            top: 3.75in;
+            left: 0.75in;
+            right: 0.75in;
+        }
+
+        .date-line {
+            font-size: 9pt;
+            color: #888;
+            margin-bottom: 30px;
+            letter-spacing: 0.05em;
+        }
+
+        .salutation {
+            font-family: 'Crimson Pro', serif;
+            font-size: 16pt;
+            margin-bottom: 25px;
+        }
+
+        .letter-body {
+            font-family: 'Crimson Pro', serif;
+            font-size: 12.5pt;
+            line-height: 1.8;
+            color: #2c2c2c;
+        }
+        .letter-body p {
+            margin-bottom: 1.5em;
+        }
+
+        .metadata-sidebar {
+            position: absolute;
+            top: 3.75in;
+            right: -0.2in; /* Adjusted relative to content-area if needed, but we'll stick to a clean block */
+            width: 1.5in;
+            text-align: right;
+            display: none; /* Hide for now to keep it ultra-clean, or enable if wanted */
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0.75in;
+            left: 0.75in;
+            right: 0.75in;
+            border-top: 0.5px solid #eee;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .footer-left {
+            font-size: 8.5pt;
+            color: #999;
+        }
+        .footer-right {
+            text-align: right;
+        }
+        .signature {
+            font-family: 'Crimson Pro', serif;
+            font-style: italic;
+            font-size: 12pt;
+            color: #1a1a1a;
+        }
+        .domain {
+            font-size: 7.5pt;
+            color: #bbb;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        /* Decorative Element */
+        .suit-marks {
+            position: absolute;
+            top: 3.2in;
+            left: 0.75in;
+            font-size: 10pt;
+            color: #ddd;
+            letter-spacing: 0.5em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="branding">
+        <div class="title">The Analog Algorithm</div>
+        <div class="subtitle">SOLAR PERMUTATION ENGINE</div>
+    </div>
+
+    <div class="suit-marks">&spades; &hearts; &clubs; &diams;</div>
+
+    <div class="content-area">
+        <div class="date-line">{{ date_str }}</div>
+        
+        <div class="salutation">Dear {{ first_name }},</div>
+        
+        <div class="letter-body">
+            {{ letter_content | safe }}
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-left">
+            Confidential &bull; {{ bc }} &bull; {{ planet }} Period &bull; Age {{ age }}
+        </div>
+        <div class="footer-right">
+            <div class="signature">-- The Analog Algorithm</div>
+            <div class="domain">ANALOGALGO.COM</div>
+        </div>
+    </div>
+
+</body>
+</html>

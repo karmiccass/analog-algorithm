@@ -102,15 +102,32 @@ async def generate_test_letter(req: LetterRequest):
         target_date = f"{req.target_month}-15"
         data = engine.calculate_letter_data(req.first_name, b_year, b_month, b_day, target_date)
         
+        # Generate Professional Prose
+        period_card = data['period']['card']
+        planet = data['period']['planet']
+        archetype = engine.get_rank_archetype(period_card)
+        realm = engine.get_suit_realm(period_card)
+        
+        prose = f"""You're already doing that thing again.
+
+The pattern running right now is the {archetype} in the {realm.lower()} domain, activated through {planet.lower()} perception.
+
+The uncomfortable line: this is costing you more than you're admitting.
+
+The question that lingers: what would a single day look like if you measured it by what you kept instead of what you shipped?
+
+This cycle isn't about productivity; it's about structural integrity. The friction you feel is the algorithm attempting to correct for a variable you've been trying to ignore. Pay attention to what breaks when you stop pushing."""
+        
         filename = f"manual_{req.first_name}.pdf"
         pdf_path = os.path.join(os.getcwd(), filename)
-        pdf_generator.build_pdf(pdf_path, req.target_month, req.first_name, "Manual Letter Content")
+        pdf_generator.build_pdf(pdf_path, req.target_month, req.first_name, prose, additional_data=data)
         
         addr = {"name": req.first_name, "address_line1": "123 Test St", "city": "Portland", "state": "OR", "zip_code": "97204"}
         integrations.send_letter_via_lob(pdf_path, addr)
         
         return {"message": "Success", "engine_data": data}
     except Exception as e:
+        logger.error(f"Error generating test letter: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
