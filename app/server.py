@@ -12,8 +12,10 @@ app = FastAPI(title="Analog Algorithm Engine", version="1.0.0")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Base directory for the project
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Absolute paths for reliability
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(APP_DIR)
+TEMPLATE_PATH = os.path.join(ROOT_DIR, "templates", "dashboard.html")
 
 # ====================== DATA MODELS ======================
 
@@ -27,14 +29,19 @@ class LetterRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     """Serves the Writer's Dashboard."""
-    template_path = os.path.join(BASE_DIR, "templates", "dashboard.html")
-    logger.info(f"Serving dashboard from: {template_path}")
+    logger.info(f"Checking for template at: {TEMPLATE_PATH}")
     
-    if not os.path.exists(template_path):
-        logger.error(f"Template not found: {template_path}")
-        return HTMLResponse(content="<h1>Writer's Dashboard Template Not Found</h1>", status_code=404)
+    if not os.path.exists(TEMPLATE_PATH):
+        # Fallback to local 'templates' if ROOT_DIR logic fails on certain OS
+        alt_path = os.path.join(os.getcwd(), "templates", "dashboard.html")
+        if os.path.exists(alt_path):
+            with open(alt_path, "r") as f:
+                return HTMLResponse(content=f.read())
         
-    with open(template_path, "r") as f:
+        logger.error(f"Template NOT FOUND at {TEMPLATE_PATH}")
+        return HTMLResponse(content=f"<h1>Dashboard Template Not Found</h1><p>Tried: {TEMPLATE_PATH}</p>", status_code=404)
+        
+    with open(TEMPLATE_PATH, "r") as f:
         return HTMLResponse(content=f.read())
 
 @app.post("/admin/generate-test")
@@ -53,23 +60,20 @@ async def generate_test_letter(req: LetterRequest):
         if "error" in data:
             raise HTTPException(status_code=400, detail=data["error"])
             
-        # Simplified content logic for manual generation
         content = f"""
 Personalized Analysis for {req.first_name}
 Target: {req.target_month}
 
-Your Birth Card is the {data['birth_card']}.
-In this {data['period']['planet']} period, your primary card is the {data['period']['card']}.
+Birth Card: {data['birth_card']}
+Period Card: {data['period']['card']} ({data['period']['planet']})
 
 This cycle emphasizes material stability and the pursuit of your higher purpose.
-Your Long Range card ({data['year_long']['long_range']}) suggests a theme of transition.
         """
         
         filename = f"manual_{req.first_name}_{req.target_month}.pdf"
         pdf_path = os.path.join(os.getcwd(), filename)
         pdf_generator.build_pdf(pdf_path, req.target_month, req.first_name, content)
         
-        # Default shipping address
         shipping_address = {
             "name": req.first_name,
             "address_line1": "123 Mystic Lane",
@@ -78,7 +82,6 @@ Your Long Range card ({data['year_long']['long_range']}) suggests a theme of tra
             "zip_code": "97204"
         }
         
-        # Attempt to mail via Lob
         lob_response = integrations.send_letter_via_lob(pdf_path, shipping_address)
         
         return {
@@ -93,8 +96,9 @@ Your Long Range card ({data['year_long']['long_range']}) suggests a theme of tra
 
 @app.post("/webhook/tiktok")
 async def tiktok_webhook(request: Request):
-    return {"status": "success", "mode": "manual_active"}
+    return {"status": "success", "mode": "manual"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
